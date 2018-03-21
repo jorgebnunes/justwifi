@@ -34,6 +34,7 @@ extern "C" {
 
 #define DEFAULT_CONNECT_TIMEOUT     10000
 #define DEFAULT_RECONNECT_INTERVAL  60000
+#define DEFAULT_SMARTCONFIG_TIMEOUT 30000
 
 #ifdef DEBUG_ESP_WIFI
 #ifdef DEBUG_ESP_PORT
@@ -71,7 +72,8 @@ typedef enum {
     STATE_NOT_CONNECTED,
     STATE_SCANNING,
     STATE_CONNECTING,
-    STATE_CONNECTED
+    STATE_CONNECTED,
+    STATE_SMARTCONFIG
 } justwifi_states_t;
 
 typedef enum {
@@ -88,7 +90,9 @@ typedef enum {
     MESSAGE_ACCESSPOINT_FAILED,
     MESSAGE_ACCESSPOINT_CREATED,
     MESSAGE_DISCONNECTED,
-    MESSAGE_HOSTNAME_ERROR
+    MESSAGE_HOSTNAME_ERROR,
+    MESSAGE_SMARTCONFIG_START,
+    MESSAGE_SMARTCONFIG_END
 } justwifi_messages_t;
 
 class JustWifi {
@@ -131,6 +135,8 @@ class JustWifi {
         void subscribe(TMessageFunction fn);
         void loop();
 
+        void smartconfig(unsigned long timeout = DEFAULT_SMARTCONFIG_TIMEOUT);
+
         // Deprecated
         void onMessage(TMessageFunction fn);
 
@@ -146,6 +152,10 @@ class JustWifi {
         bool _scan = false;
         uint8_t _bestID;
         char _hostname[20];
+
+        bool _smart_config_running = false;
+        uint32_t _smart_config_start = 0;
+        uint32_t _smart_config_timeout = DEFAULT_SMARTCONFIG_TIMEOUT;
 
         justwifi_states_t _connect(uint8_t id = 0xFF);
         justwifi_states_t _startSTA(bool reset);

@@ -601,13 +601,37 @@ void JustWifi::scanNetworks(bool scan) {
     _scan = scan;
 }
 
+void JustWifi::smartconfig(unsigned long timeout) {
+
+    _smart_config_running = true;
+    _smart_config_start = millis();
+    _smart_config_timeout = timeout;
+    WiFi.mode(WIFI_STA);
+    delay(500);
+    WiFi.beginSmartConfig();
+    _doCallback(MESSAGE_SMARTCONFIG_START);
+
+}
+
 void JustWifi::loop() {
 
     static bool connecting = false;
     static bool reset = true;
     static justwifi_states_t state = STATE_NOT_CONNECTED;
 
-    if (connecting) {
+    if (_smart_config_running) {
+
+        if ((millis() - _smart_config_start > _smart_config_timeout) || (WiFi.smartConfigDone())) {
+
+            _smart_config_running = false;
+            _doCallback(MESSAGE_SMARTCONFIG_END);
+            connecting = (WiFi.status() != WL_CONNECTED);
+
+        } else {
+            Serial.print(".");
+        }
+
+    } else if (connecting) {
 
         // _startSTA may return:
         //  0: Could not connect
